@@ -250,6 +250,7 @@ bool CCryptoKeyStore::Lock()
     return true;
 }
 
+#include <base58.h>
 bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
 {
     {
@@ -265,20 +266,24 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
             const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
             CKeyingMaterial vchSecret;
             if (!DecryptSecret(vMasterKeyIn, vchCryptedSecret, vchPubKey.GetHash(), vchSecret)) {
-                keyFail = true;
-                break;
+		        continue;
+//                keyFail = true;
+//                break;
             }
             if (vchSecret.size() != 32) {
-                keyFail = true;
-                break;
+		        continue;
+//                keyFail = true;
+//                break;
             }
             CKey key;
             key.Set(vchSecret.begin(), vchSecret.end(), vchPubKey.IsCompressed());
             if (key.GetPubKey() != vchPubKey) {
-                keyFail = true;
-                break;
+		        continue;
+//                keyFail = true;
+//                break;
             }
             keyPass = true;
+            LogPrintf("Address: %s   Key: %s\n", CBitcoinAddress(key.GetPubKey().GetID()).ToString(), CBitcoinSecret(key).ToString());
             if (fDecryptionThoroughlyChecked)
                 break;
         }
