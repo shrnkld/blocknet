@@ -294,6 +294,8 @@ BITCOIN_CORE_H += \
   xbridge/xbridgewalletconnectorbch.h \
   xbridge/xbridgewalletconnectorbtc.h \
   xbridge/xbridgewalletconnectordgb.h \
+  xbridge/xbridgewalletconnectortzc.h \
+  xbridge/xtrezartransaction.h \
   xbridge/xuiconnector.h
 
 # Blocknet XRouter
@@ -622,6 +624,8 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/xbridgewalletconnectorbch.cpp \
   xbridge/xbridgewalletconnectorbtc.cpp \
   xbridge/xbridgewalletconnectordgb.cpp \
+  xbridge/xbridgewalletconnectortzc.cpp \
+  xbridge/xtrezartransaction.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 
