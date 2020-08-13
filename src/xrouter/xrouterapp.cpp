@@ -551,8 +551,11 @@ std::string App::printConfigs()
         auto settings = it.second.first;
         UniValue o(UniValue::VOBJ);
         std::vector<unsigned char> spubkey; servicenodePubKey(it.first, spubkey);
+        const auto snode = sn::ServiceNodeMgr::instance().getSn(spubkey);
         o.pushKV("nodepubkey", HexStr(spubkey));
         o.pushKV("paymentaddress", settings->paymentAddress(xrDefault));
+        o.pushKV("xrouterver", static_cast<int>(snode.getXRouterVersion()));
+        o.pushKV("xbridgever", static_cast<int>(snode.getXBridgeVersion()));
         o.pushKV("config", settings->publicText());
         UniValue p_val(UniValue::VOBJ);
         for (const auto & p : settings->getPlugins()) {
@@ -1691,6 +1694,10 @@ void App::snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr,
         o.emplace_back("paymentaddress", settings->paymentAddress(xrDefault));
         // tier
         o.emplace_back("tier", sn::ServiceNodeMgr::tierString(tier));
+
+        const auto snode = sn::ServiceNodeMgr::instance().getSn(spubkey);
+        o.emplace_back("xrouterver", static_cast<int>(snode.getXRouterVersion()));
+        o.emplace_back("xbridgever", static_cast<int>(snode.getXBridgeVersion()));
 
         // wallets
         const auto & wallets = settings->getWallets();

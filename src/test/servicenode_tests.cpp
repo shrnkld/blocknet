@@ -1510,6 +1510,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
         BOOST_CHECK_EQUAL(find_value(o, "snodeprivkey").get_str(), EncodeSecret(sk));
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK_EQUAL(find_value(o, "xrouterver").get_int(), 0); // version is not set until ping
+        BOOST_CHECK_EQUAL(find_value(o, "xbridgever").get_int(), 0); // version is not set until ping
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // hasn't been started, expecting offline
@@ -1530,6 +1532,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
         BOOST_CHECK_EQUAL(find_value(o, "snodeprivkey").get_str(), EncodeSecret(sk));
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK_EQUAL(find_value(o, "xrouterver").get_int(), 0); // version is not set until ping
+        BOOST_CHECK_EQUAL(find_value(o, "xbridgever").get_int(), 0); // version is not set until ping
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // snode is offline until ping
@@ -1543,6 +1547,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
         BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK_EQUAL(find_value(o, "xrouterver").get_int(), 0); // version is not set until ping
+        BOOST_CHECK_EQUAL(find_value(o, "xbridgever").get_int(), 0); // version is not set until ping
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // snode is offline until ping
@@ -1584,6 +1590,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
         BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK_EQUAL(find_value(o, "xrouterver").get_int(), static_cast<int>(XROUTER_PROTOCOL_VERSION));
+        BOOST_CHECK_EQUAL(find_value(o, "xbridgever").get_int(), static_cast<int>(XBRIDGE_PROTOCOL_VERSION));
         BOOST_CHECK      (find_value(o, "timelastseen").get_int() >= tt2);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str().empty(), false);
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running");

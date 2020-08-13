@@ -1288,6 +1288,8 @@ static UniValue xrShowConfigs(const JSONRPCRequest& request)
     nodepubkey     | str  | The node ID.
     paymentaddress | str  | The node's payment address, may also be specific per
                    |      | command.
+    xrouterver     | int  | The service node xrouter version.
+    xbridgever     | int  | The service node xbridge version.
     config         | str  | The raw text contents of your xrouter.conf.
     plugins        | obj  | An object containing the raw configuration text
                    |      | contents for each of this node's plugins.
@@ -1380,6 +1382,8 @@ static UniValue xrConnectedNodes(const JSONRPCRequest& request)
     reply          | arr   | An array of nodes, supported services, and their
                    |       | respective configs.
     nodepubkey     | str   | The node ID.
+    xrouterver     | int   | The node xrouter version.
+    xbridgever     | int   | The node xbridge version.
     score          | int   | The node's score based on quality of service. A
                    |       | score of -200 will ban the node for a 24hr period.
                    |       | You can change the ban threshold with the
@@ -1485,6 +1489,8 @@ static UniValue xrConnect(const JSONRPCRequest& request)
     reply          | arr   | An array of nodes providing the specified service,
                    |       | along with their configs.
     nodepubkey     | str   | The node ID.
+    xrouterver     | int   | The node xrouter version.
+    xbridgever     | int   | The node xbridge version.
     score          | int   | The node's score based on quality of service. A
                    |       | score of -200 will ban the node for a 24hr period.
                    |       | You can change the ban threshold with the

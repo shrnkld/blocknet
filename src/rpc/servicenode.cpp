@@ -637,6 +637,8 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
                 "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
                 "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "    \"xrouterver\": n,                (numeric) XRouter version supported by this service node\n"
+                "    \"xbridgever\": n,                (numeric) XBridge version supported by this service node\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"status\":\"xxxx\",              (string) Status of service node (e.g. running, offline)\n"
@@ -666,6 +668,8 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
         obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
         obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
+        obj.pushKV("xrouterver", static_cast<int>(snode.getXRouterVersion()));
+        obj.pushKV("xbridgever", static_cast<int>(snode.getXBridgeVersion()));
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
@@ -694,6 +698,8 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
                 "    \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "    \"xrouterver\": n,                (numeric) XRouter version supported by this service node\n"
+                "    \"xbridgever\": n,                (numeric) XBridge version supported by this service node\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"exr\": n,                       (boolean) Enterprise XRouter compatibility\n"
@@ -718,6 +724,8 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("snodekey", HexStr(snode.getSnodePubKey()));
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(snode.getTier()));
         obj.pushKV("address", EncodeDestination(snode.getPaymentAddress()));
+        obj.pushKV("xrouterver", static_cast<int>(snode.getXRouterVersion()));
+        obj.pushKV("xbridgever", static_cast<int>(snode.getXBridgeVersion()));
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("exr", snode.isEXRCompatible());
@@ -746,6 +754,8 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
                 "  \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
                 "  \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
                 "  \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "  \"xrouterver\": n,                (numeric) XRouter version supported by this service node\n"
+                "  \"xbridgever\": n,                (numeric) XBridge version supported by this service node\n"
                 "  \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "  \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "  \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
@@ -782,6 +792,8 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
     obj.pushKV("tier", sn::ServiceNodeMgr::tierString(activesn.tier));
     obj.pushKV("snodekey", HexStr(activesn.key.GetPubKey()));
     obj.pushKV("address", EncodeDestination(activesn.address));
+    obj.pushKV("xrouterver", static_cast<int>(snode.getXRouterVersion()));
+    obj.pushKV("xbridgever", static_cast<int>(snode.getXBridgeVersion()));
     obj.pushKV("timelastseen", snode.getPingTime());
     obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
     obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
