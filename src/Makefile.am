@@ -271,6 +271,7 @@ BITCOIN_CORE_H += \
   xbridge/util/fastdelegate.h \
   xbridge/util/logger.h \
   xbridge/util/posixtimeconversion.h \
+  xbridge/util/rpcutil.h \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xassert.h \
@@ -610,6 +611,7 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/rpcxbridge.cpp \
   xbridge/util/logger.cpp \
   xbridge/util/posixtimeconversion.cpp \
+  xbridge/util/rpcutil.cpp \
   xbridge/util/settings.cpp \
   xbridge/util/txlog.cpp \
   xbridge/util/xbridgeerror.cpp \
