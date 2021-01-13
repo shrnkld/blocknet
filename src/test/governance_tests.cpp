@@ -300,6 +300,7 @@ bool cleanup(int blockCount, CWallet *wallet=nullptr) {
         InvalidateBlock(state, params, chainActive.Tip(), false);
     ActivateBestChain(state, params); SyncWithValidationInterfaceQueue();
     gArgs.ForceSetArg("-proposaladdress", "");
+    gArgs.ForceSetArg("-maxtxfee", "");
     removeGovernanceDBFiles();
     gov::Governance::instance().reset();
     if (wallet) {
@@ -1792,6 +1793,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
 BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 {
+    gArgs.ForceSetArg("-maxtxfee", "200000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
@@ -1891,7 +1893,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 
         // Prep vote utxo
         CTransactionRef sendtx;
-        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 5 * COIN, sendtx);
         BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
         BOOST_REQUIRE_MESSAGE(accepted, "Proposal fee account should confirm to the network before continuing");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -2218,6 +2220,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 
 BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 {
+    gArgs.ForceSetArg("-maxtxfee", "200000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
@@ -2317,7 +2320,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
         // Prep vote utxo
         CTransactionRef sendtx;
-        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 5 * COIN, sendtx);
         BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
         BOOST_REQUIRE_MESSAGE(accepted, "Proposal fee account should confirm to the network before continuing");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
