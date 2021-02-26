@@ -572,7 +572,8 @@ void SetupServerArgs()
     gArgs.AddArg("-maxmempoolxbridge", strprintf("Maximum size in MB (megabytes) for the xbridge mempool (default: %dMB)", 128), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-dxnowallets", strprintf("Show all orders across the network for non-local wallets"), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-rpcxbridgetimeout", strprintf("Timeout for internal XBridge RPC calls (default: %d seconds)", 120), false, OptionsCategory::XBRIDGE);
-
+    gArgs.AddArg("-loadorders", strprintf("Enable loading orders on startup (default: 0)"), false, OptionsCategory::XBRIDGE);
+    
     // XRouter
     gArgs.AddArg("-xrouter", strprintf("Enable XRouter services (default: %u)", true), false, OptionsCategory::XROUTER);
     gArgs.AddArg("-xrouterbanscore", strprintf("Ban XRouter nodes who's score is lower than this value (default: %u)", -200), false, OptionsCategory::XROUTER);

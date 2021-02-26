@@ -916,6 +916,10 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                               std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
+
+        // error.emplace_back(Pair("validcointest", std::to_string(xbridge::xBridgeValidCoinTest(params[1].get_str()))));
+        // error.emplace_back(Pair("significantdigitstest", std::to_string(xbridge::xBridgeSignificantDigitsTest(xbridge::TransactionDescr::COIN))));
+
         return uret(error);
     }
 
@@ -1031,6 +1035,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
     }
     case xbridge::INSIFFICIENT_FUNDS:{
+        
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     }
 

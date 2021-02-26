@@ -231,7 +231,7 @@ double xBridgeValueFromAmount(CAmount amount) {
  */
 CAmount xBridgeIntFromReal(double utxo_amount) {
     double d = utxo_amount * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
-    d += 1.0 / static_cast<double>(::COIN); // round up 1 sat
+   // d += 1.0 / static_cast<double>(::COIN); // round up 1 sat
     auto r = static_cast<CAmount>(d);
     return r;
 }

@@ -386,8 +386,15 @@ bool App::start()
     if (xbridge::Exchange::instance().isStarted())
         LOG() << "XBridge exchange started";
 
-    // Restore local orders
-    loadOrders();
+  
+    // Check if the loadorders option is set
+    if(gArgs.GetBoolArg("-loadorders",0)){
+        // Restore local orders
+        loadOrders();
+    }
+   
+
+   
 
     return s;
 }
@@ -2501,6 +2508,7 @@ Error App::checkAmount(const std::string & currency,
     const auto & excluded = getAllLockedUtxos(currency);
     if (conn->getWalletBalance(excluded, address) < (static_cast<double>(amount) / TransactionDescr::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
+        
         return xbridge::INSIFFICIENT_FUNDS;
     }
     return xbridge::SUCCESS;
@@ -3720,7 +3728,7 @@ void App::clearNonLocalOrders() {
 
 void App::loadOrders() {
     LOCK(m_lock);
-
+    UniValue infotest(UniValue::VOBJ);
     XOrderSet orders;
     if (!xdb.Exists()) {
         UniValue info(UniValue::VOBJ);
