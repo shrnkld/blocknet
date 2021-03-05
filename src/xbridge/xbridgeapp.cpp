@@ -386,12 +386,10 @@ bool App::start()
     if (xbridge::Exchange::instance().isStarted())
         LOG() << "XBridge exchange started";
 
-  
-    // Check if the loadorders option is set
-    if(gArgs.GetBoolArg("-loadorders",0)){
-        // Restore local orders
-        loadOrders();
-    }
+
+    // Restore local orders
+    loadOrders();
+    
    
 
    
