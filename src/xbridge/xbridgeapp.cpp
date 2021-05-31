@@ -24,6 +24,8 @@
 #include <xbridge/xbridgewalletconnectordgb.h>
 #include <xbridge/xbridgewalletconnectorbtg.h>
 #include <xbridge/xbridgewalletconnectorstealth.h>
+#include <xbridge/xbridgewalletconnectorpart.h>
+#include <xbridge/xbridgewalletconnectorltfn.h>
 #include <xbridge/xbridgepacket.h>
 #include <xbridge/xuiconnector.h>
 #include <xrouter/xrouterapp.h>
@@ -1076,6 +1078,16 @@ void App::updateActiveWallets()
         else if (wp.method == "STEALTH" || wp.method == "XST")
         {
             conn.reset(new StealthWalletConnector);
+            *conn = wp;
+        }
+        else if (wp.method == "PART")
+        {
+            conn.reset(new PartWalletConnector);
+            *conn = wp;
+        }
+        else if (wp.method == "LTFN")
+        {
+            conn.reset(new LTFNWalletConnector);
             *conn = wp;
         }
         else
