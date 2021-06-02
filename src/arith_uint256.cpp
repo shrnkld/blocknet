@@ -186,6 +186,59 @@ unsigned int base_uint<BITS>::bits() const
     return 0;
 }
 
+// Explicit instantiations for base_uint<128>
+template base_uint<128>::base_uint(const std::string&);
+template base_uint<128>& base_uint<128>::operator<<=(unsigned int);
+template base_uint<128>& base_uint<128>::operator>>=(unsigned int);
+template base_uint<128>& base_uint<128>::operator*=(uint32_t b32);
+template base_uint<128>& base_uint<128>::operator*=(const base_uint<128>& b);
+template base_uint<128>& base_uint<128>::operator/=(const base_uint<128>& b);
+template int base_uint<128>::CompareTo(const base_uint<128>&) const;
+template bool base_uint<128>::EqualTo(uint64_t) const;
+template double base_uint<128>::getdouble() const;
+template<> std::string base_uint<128>::GetHex() const { return ArithToUint128(*this).GetHex(); }
+template std::string base_uint<128>::ToString() const;
+template<> void base_uint<128>::SetHex(const char* psz) { *this = UintToArith128(uint128S(psz)); }
+template void base_uint<128>::SetHex(const std::string&);
+template unsigned int base_uint<128>::bits() const;
+
+arith_uint128 MakeUint128FromFloat(long double v) 
+{
+  // Go 50 bits at a time, that fits in a double
+  static_assert(std::numeric_limits<double>::digits >= 50, "");
+  static_assert(std::numeric_limits<long double>::digits <= 150, "");
+  // Undefined behavior if v is not finite or cannot fit into arith_uint128.
+  assert(std::isfinite(v) && v > -1 && v < std::ldexp(1.0L, 128));
+
+  v = std::ldexp(v, -100);
+  uint64_t w0 = static_cast<uint64_t>(static_cast<double>(std::trunc(v)));
+  v = std::ldexp(v - static_cast<double>(w0), 50);
+  uint64_t w1 = static_cast<uint64_t>(static_cast<double>(std::trunc(v)));
+  v = std::ldexp(v - static_cast<double>(w1), 50);
+  uint64_t w2 = static_cast<uint64_t>(static_cast<double>(std::trunc(v)));
+  return (static_cast<arith_uint128>(w0) << 100) | (static_cast<arith_uint128>(w1) << 50) |
+         static_cast<arith_uint128>(w2);
+}
+
+arith_uint128::arith_uint128(float v) : arith_uint128(MakeUint128FromFloat(v)) {}
+arith_uint128::arith_uint128(double v) : arith_uint128(MakeUint128FromFloat(v)) {}
+arith_uint128::arith_uint128(long double v) : arith_uint128(MakeUint128FromFloat(v)) {}
+
+uint128 ArithToUint128(const arith_uint128 &a)
+{
+    uint128 b;
+    for(int x=0; x<a.WIDTH; ++x)
+        WriteLE32(b.begin() + x*4, a.pn[x]);
+    return b;
+}
+arith_uint128 UintToArith128(const uint128 &a)
+{
+    arith_uint128 b;
+    for(int x=0; x<b.WIDTH; ++x)
+        b.pn[x] = ReadLE32(a.begin() + x*4);
+    return b;
+}
+
 // Explicit instantiations for base_uint<256>
 template base_uint<256>::base_uint(const std::string&);
 template base_uint<256>& base_uint<256>::operator<<=(unsigned int);

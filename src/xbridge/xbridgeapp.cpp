@@ -268,7 +268,7 @@ protected:
 App::Impl::Impl()
     : m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
     , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-    , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
+    , m_timer(m_timerIo, boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)))
 {
 
 }
@@ -353,7 +353,8 @@ bool App::createConf()
                 "# TxWithTimeField=false"                                                      + eol +
                 "# LockCoinsSupported=false"                                                   + eol +
                 "# JSONVersion="                                                               + eol +
-                "# ContentType="                                                               + eol
+                "# ContentType="                                                               + eol +
+                "# WalletName="                                                                + eol
             );
         }
 
@@ -608,13 +609,6 @@ SessionPtr App::Impl::getSession()
     ptr = m_sessions.front();
     m_sessions.pop();
     m_sessions.push(ptr);
-
-    if(ptr->isWorking())
-    {
-        ptr = SessionPtr(new Session());
-        m_sessions.push(ptr);
-        m_sessionAddressMap[ptr->sessionAddr()] = ptr;
-    }
 
     return ptr;
 }
@@ -932,20 +926,27 @@ void App::updateActiveWallets()
     std::set<std::string> toRemove;
     {
         LOCK(m_p->m_connectorsLock);
-        for (auto & item : m_p->m_connectorCurrencyMap) {
+        for (auto & item : m_p->m_connectorCurrencyMap) 
+        {
             bool found = false;
-            for (auto & currency : wallets) {
-                if (item.first == currency) {
+            for (auto & currency : wallets) 
+            {
+                if (item.first == currency) 
+                {
                     found = true;
                     break;
                 }
             }
             if (!found)
+            {
                 toRemove.insert(item.first);
+            }
         }
     } // do not deadlock removeConnector(), it must be outside lock scope
     for (auto & currency : toRemove)
+    {
         removeConnector(currency);
+    }
 
     // Store connectors from config
     std::vector<WalletConnectorPtr> conns;
@@ -960,15 +961,21 @@ void App::updateActiveWallets()
     for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
     {
         // Ignore bad wallets until expiry
-        if (badWallets.count(*i)) {
+        if (badWallets.count(*i)) 
+        {
             const auto last_time = badWallets[*i];
             const auto current_time = boost::posix_time::second_clock::universal_time();
             // Wait ~5 minutes before doing wallet check on bad wallet
-            if (static_cast<boost::posix_time::time_duration>(current_time - last_time).total_seconds() >= 300) {
+            if (static_cast<boost::posix_time::time_duration>(current_time - last_time).total_seconds() >= 300) 
+            {
                 LOCK(m_updatingWalletsLock);
                 m_badWallets.erase(*i);
-            } else // not ready to do wallet check
+            } 
+            else
+            { 
+                // not ready to do wallet check
                 continue;
+            }
         }
 
         WalletParam wp;
@@ -996,23 +1003,34 @@ void App::updateActiveWallets()
         wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
         wp.cashAddrPrefix              = s.get<std::string>(*i + ".CashAddrPrefix", "");
 
-        if (wp.m_user.empty() || wp.m_passwd.empty())
-            WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
+        std::string walletName         = s.get<std::string>(*i + ".WalletName", "");
+        if (walletName != wp.walletName)
+        {
+            wp.walletName              = walletName;
+        } 
 
-        if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) {
+        if (wp.m_user.empty() || wp.m_passwd.empty())
+        {
+            WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
+        }
+
+        if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
             removeConnector(wp.currency);
             continue;
         }
 
         // Check maker locktime reqs
-        if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) {
+        if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed maker locktime requirements";
             removeConnector(wp.currency);
             continue;
         }
         // Check taker locktime reqs (non-slow chains)
-        if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) {
+        if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
             removeConnector(wp.currency);
             continue;
@@ -1020,7 +1038,8 @@ void App::updateActiveWallets()
         // If this coin is a slow blockchain check to make sure locktime drift checks
         // are compatible with this chain. If not then ignore loading the token.
         // locktime calc should be less than taker locktime target
-        if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) {
+        if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
             removeConnector(wp.currency);
             continue;
@@ -1028,19 +1047,22 @@ void App::updateActiveWallets()
 
         // Confirmation compatibility check
         const auto maxConfirmations = std::max<uint32_t>(XLOCKTIME_DRIFT_SECONDS/wp.blockTime, XMAX_LOCKTIME_DRIFT_BLOCKS);
-        if (wp.requiredConfirmations > maxConfirmations) {
+        if (wp.requiredConfirmations > maxConfirmations) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed confirmation check, max allowed for this token is " << maxConfirmations;
             removeConnector(wp.currency);
             continue;
         }
 
-        if (wp.blockSize < 1024) {
+        if (wp.blockSize < 1024) 
+        {
             wp.blockSize = 1024;
             WARN() << wp.currency << " \"" << wp.title << "\"" << " Minimum block size required is 1024 kb";
         }
 
         xbridge::WalletConnectorPtr conn;
-        if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") {
+        if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") 
+        {
             LOG() << "ETH connector is not supported on XBridge at this time";
             continue;
         }
@@ -1108,7 +1130,8 @@ void App::updateActiveWallets()
     std::set<std::string> validWallets;
 
     // Process connections
-    if (!conns.empty()) {
+    if (!conns.empty()) 
+    {
         // TLDR: Multithreaded connection checks
         // The code below utilizes boost async to spawn threads up to the reported hardware concurrency
         // capabilities of the host. All of the wallets loaded into xbridge.conf will be checked here,
@@ -1122,11 +1145,13 @@ void App::updateActiveWallets()
         uint32_t pendingJobs = 0;
         uint32_t allJobs = static_cast<uint32_t>(conns.size());
         boost::thread_group tg;
-        auto check = [&muJobs,&pendingJobs,&allJobs,&badConnections,&validConnections](WalletConnectorPtr conn) {
+        auto check = [&muJobs,&pendingJobs,&allJobs,&badConnections,&validConnections](WalletConnectorPtr conn) 
+        {
             if (ShutdownRequested())
                 return;
             // Check that wallet is reachable
-            if (!conn->init()) {
+            if (!conn->init()) 
+            {
                 {
                     boost::mutex::scoped_lock l(muJobs);
                     --pendingJobs;
@@ -1144,14 +1169,17 @@ void App::updateActiveWallets()
         };
 
         // Synchronize all connection checks
-        try {
-            while (true) {
+        try 
+        {
+            while (true) 
+            {
                 boost::this_thread::interruption_point();
                 if (ShutdownRequested())
                     break;
 
                 const int32_t size = conns.size();
-                for (int32_t i = size - 1; i >= 0; --i) {
+                for (int32_t i = size - 1; i >= 0; --i) 
+                {
                     {
                         boost::mutex::scoped_lock l(muJobs);
                         if (pendingJobs >= maxPendingJobs)
@@ -1181,7 +1209,10 @@ void App::updateActiveWallets()
                 boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
             }
             tg.join_all();
-        } catch (...) { // bail on error (possible thread error etc)
+        } 
+        catch (...) 
+        { 
+            // bail on error (possible thread error etc)
             tg.interrupt_all();
             tg.join_all();
             LOCK(m_updatingWalletsLock);
@@ -1191,9 +1222,11 @@ void App::updateActiveWallets()
         }
 
         // Check for shutdown
-        if (!ShutdownRequested()) {
+        if (!ShutdownRequested()) 
+        {
             // Add valid connections
-            for (auto & conn : validConnections) {
+            for (auto & conn : validConnections) 
+            {
                 addConnector(conn);
                 validWallets.insert(conn->currency);
                 LOG() << conn->currency << " \"" << conn->title << "\"" << " connected " << conn->m_ip << ":" << conn->m_port;
@@ -1214,7 +1247,9 @@ void App::updateActiveWallets()
 
     // Let the exchange know about the new wallet list
     if (!ShutdownRequested())
+    {
         xbridge::Exchange::instance().loadWallets(validWallets);
+    }
 
     {
         LOCK(m_updatingWalletsLock);
@@ -1421,10 +1456,10 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
-        const std::string to, const std::string toCurrency, const CAmount makerAmount, const CAmount takerAmount,
-        const uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
+        const std::string to, const std::string toCurrency, const amount_t makerAmount, const amount_t takerAmount,
+        const amount_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
-    double repostAmount{0};
+    amount_t repostAmount{uint64_t(0)};
     for (const auto & utxo : utxos)
         repostAmount += utxo.amount;
 
@@ -1447,7 +1482,7 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
     const bool usePartial = newRepostAmount > minFromAmount;
 
     // Calculate new to amount (destination amount).
-    const CAmount toAmount = xBridgeDestAmountFromPrice(newRepostAmount, makerAmount, takerAmount);
+    const amount_t toAmount = xBridgeDestAmountFromPrice(newRepostAmount, makerAmount, takerAmount);
 
     // Check the params (checks for valid amount)
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, newRepostAmount, from);
@@ -1463,10 +1498,10 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
 //******************************************************************************
 xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & fromCurrency,
-                                           const CAmount & fromAmount,
+                                           const amount_t & fromAmount,
                                            const std::string & to,
                                            const std::string & toCurrency,
-                                           const CAmount & toAmount,
+                                           const amount_t & toAmount,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
@@ -1477,14 +1512,14 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 //******************************************************************************
 xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & fromCurrency,
-                                           const CAmount & fromAmount,
+                                           const amount_t & fromAmount,
                                            const std::string & to,
                                            const std::string & toCurrency,
-                                           const CAmount & toAmount,
+                                           const amount_t & toAmount,
                                            const std::vector<wallet::UtxoEntry> utxos,
                                            const bool partialOrder,
                                            const bool repostOrder,
-                                           const CAmount partialMinimum,
+                                           const amount_t partialMinimum,
                                            uint256 & id,
                                            uint256 & blockHash,
                                            const uint256 parentid)
@@ -1543,58 +1578,73 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     if (connFrom->isDustAmount(xBridgeValueFromAmount(fromAmount)))
+    {
         return xbridge::Error::DUST;
+    }
 
     if (connTo->isDustAmount(xBridgeValueFromAmount(toAmount)))
+    {
         return xbridge::Error::DUST;
+    }
 
-    if (partialOrder && connFrom->isDustAmount(xBridgeValueFromAmount(partialMinimum))) {
+    if (partialOrder && connFrom->isDustAmount(xBridgeValueFromAmount(partialMinimum))) 
+    {
         WARN() << "partial order minimum is dust <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::DUST;
     }
 
-    int partialUtxosRequiredForMinimum{0};
-    bool partialRemainderRequired{false};
-    CAmount partialVoutsTotal{0};
-    CAmount partialPerUtxoFees{0};
-    CAmount partialRemainderVoutTotal{0};
-    bool partialRemainderIsDust{false};
-    int partialOrderVouts{0};
-    bool partialExactUtxoMatch{false};
-    if (partialOrder && utxos.empty()) {
+    int      partialUtxosRequiredForMinimum{0};
+    bool     partialRemainderRequired{false};
+    amount_t partialVoutsTotal{uint64_t(0)};
+    amount_t partialPerUtxoFees{uint64_t(0)};
+    amount_t partialRemainderVoutTotal{uint64_t(0)};
+    bool     partialRemainderIsDust{false};
+    int      partialOrderVouts{0};
+    bool     partialExactUtxoMatch{false};
+    
+    if (partialOrder && utxos.empty()) 
+    {
         // Partial order support
-        partialUtxosRequiredForMinimum = static_cast<int>(fromAmount / partialMinimum);
-        if (partialUtxosRequiredForMinimum > xBridgePartialOrderMaxUtxos) {
+        partialUtxosRequiredForMinimum = amount_t(fromAmount / partialMinimum).Get64();
+        if (partialUtxosRequiredForMinimum > xBridgePartialOrderMaxUtxos) 
+        {
             partialUtxosRequiredForMinimum = xBridgePartialOrderMaxUtxos - 1; // support 1 utxo for excess remainder
             partialRemainderRequired = true;
-        } else if (fromAmount % partialMinimum != 0)
+        } 
+        else if (fromAmount % partialMinimum != 0)
+        {
             partialRemainderRequired = true;
+        }
 
         // Estimated fees if taker were to take the minimum order
         // (i.e. if 1 utxo were to be used to fulfill the partial order)
-        CAmount partialFee1 = xBridgeIntFromReal(connFrom->minTxFee1(1, 3));
-        CAmount partialFee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
+        amount_t partialFee1 = xBridgeIntFromReal(connFrom->minTxFee1(1, 3));
+        amount_t partialFee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
         partialPerUtxoFees = partialFee1 + partialFee2;
-        CAmount partialFees = (partialUtxosRequiredForMinimum + (partialRemainderRequired ? 1 : 0)) * partialPerUtxoFees;
+        amount_t partialFees = amount_t(uint64_t(partialUtxosRequiredForMinimum + (partialRemainderRequired ? 1 : 0))) * partialPerUtxoFees;
 
-        CAmount partialSplitVoutsTotal = partialUtxosRequiredForMinimum * partialMinimum;
-        if (fromAmount - partialSplitVoutsTotal < 0) {
+        amount_t partialSplitVoutsTotal = amount_t(uint64_t(partialUtxosRequiredForMinimum)) * partialMinimum;
+        if (fromAmount - partialSplitVoutsTotal < 0) 
+        {
             WARN() << "insufficient funds for partial order <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
         partialRemainderVoutTotal = fromAmount - partialSplitVoutsTotal;
-        if (partialRemainderVoutTotal < 0)
+        if (partialRemainderVoutTotal < amount_t(uint64_t(0)))
+        {
             partialRemainderVoutTotal = 0;
+        }
         partialRemainderIsDust = connFrom->isDustAmount(xBridgeValueFromAmount(partialRemainderVoutTotal + partialPerUtxoFees));
-        partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : 0);
-        partialOrderVouts = partialUtxosRequiredForMinimum + (partialRemainderRequired && !partialRemainderIsDust ? 1 : 0);
+        partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : amount_t(uint64_t(0)));
+        partialOrderVouts = partialUtxosRequiredForMinimum + uint64_t((partialRemainderRequired && !partialRemainderIsDust ? 1 : 0));
     }
 
     TransactionDescrPtr ptr(new TransactionDescr);
     std::vector<wallet::UtxoEntry> outputsForUse;
 
     // Utxo selection only if supplied utxos are empty
-    if (utxos.empty()) {
+    if (utxos.empty()) 
+    {
         LOCK(m_utxosOrderLock);
 
         // Exclude the used uxtos
@@ -1604,14 +1654,16 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         std::vector<wallet::UtxoEntry> outputs;
         connFrom->getUnspent(outputs, excludedUtxos);
 
-        if (partialOrder) {
-            const CAmount prepTxFee = xBridgeIntFromReal(connFrom->minTxFee1(10, partialOrderVouts + 1));
-            CAmount utxoAmount{0};
-            CAmount fees{0};
+        if (partialOrder) 
+        {
+            const amount_t prepTxFee = xBridgeIntFromReal(connFrom->minTxFee1(10, partialOrderVouts + 1));
+            amount_t utxoAmount{uint64_t(0)};
+            amount_t fees{uint64_t(0)};
 
             // Select utxos
             if (!selectPartialUtxos(from, outputs, fromAmount, partialUtxosRequiredForMinimum, partialPerUtxoFees, prepTxFee,
-                    partialMinimum, partialRemainderVoutTotal, outputsForUse, utxoAmount, fees, partialExactUtxoMatch)) {
+                    partialMinimum, partialRemainderVoutTotal, outputsForUse, utxoAmount, fees, partialExactUtxoMatch)) 
+            {
                 WARN() << "partial order insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
                 return xbridge::Error::INSIFFICIENT_FUNDS;
             }
@@ -1626,7 +1678,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 xbridge::LogOrderMsg(log_obj, "partial order utxo selection details for order", __FUNCTION__);
             }
 
-        } else {
+        } 
+        else 
+        {
             uint64_t utxoAmount = 0;
             uint64_t fee1 = 0;
             uint64_t fee2 = 0;
@@ -1641,31 +1695,36 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
             // Select utxos
             if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, fromAmount,
-                             TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
+                             xbridge::COIN, outputsForUse, utxoAmount, fee1, fee2))
             {
                 WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
                 return xbridge::Error::INSIFFICIENT_FUNDS;
             }
 
             {
+                // TODO .Get64() check
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("currency", from);
-                log_obj.pushKV("fee1", (static_cast<double>(fee1) / TransactionDescr::COIN));
-                log_obj.pushKV("fee2", (static_cast<double>(fee2) / TransactionDescr::COIN));
-                log_obj.pushKV("utxos_amount", (static_cast<double>(utxoAmount) / TransactionDescr::COIN));
-                log_obj.pushKV("required_amount", (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN));
+                log_obj.pushKV("fee1", (arith_uint128(fee1) / xbridge::COIN).Get64());
+                log_obj.pushKV("fee2", (arith_uint128(fee2) / xbridge::COIN).Get64());
+                log_obj.pushKV("utxos_amount", (arith_uint128(utxoAmount) / xbridge::COIN).Get64());
+                log_obj.pushKV("required_amount", (arith_uint128(fromAmount + fee1 + fee2) / xbridge::COIN).Get64());
                 xbridge::LogOrderMsg(log_obj, "utxo selection details for order", __FUNCTION__);
             }
         }
 
-    } else {
+    } 
+    else 
+    {
         outputsForUse = utxos;
     }
 
     // sign used coins
-    for (auto & entry : outputsForUse) {
+    for (auto & entry : outputsForUse) 
+    {
         std::string signature;
-        if (!connFrom->signMessage(entry.address, entry.toString(), signature)) {
+        if (!connFrom->signMessage(entry.address, entry.toString(), signature)) 
+        {
             WARN() << "funds not signed <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::FUNDS_NOT_SIGNED;
         }
@@ -1730,10 +1789,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     CHashWriter ss(SER_GETHASH, 0);
     ss << ptr->from
        << ptr->fromCurrency
-       << ptr->fromAmount
+       << ptr->fromAmount.GetHex()
        << ptr->to
        << ptr->toCurrency
-       << ptr->toAmount
+       << ptr->toAmount.GetHex()
        << timestampValue
        << ptr->blockHash
        << outputsForUse.at(0).signature;
@@ -1901,10 +1960,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 CHashWriter ss2(SER_GETHASH, 0);
                 ss2 << ptr->from
                     << ptr->fromCurrency
-                    << ptr->fromAmount
+                    << ptr->fromAmount.GetHex()
                     << ptr->to
                     << ptr->toCurrency
-                    << ptr->toAmount
+                    << ptr->toAmount.GetHex()
                     << timestampValue
                     << ptr->blockHash
                     << ptr->usedCoins.at(0).signature;
@@ -2038,7 +2097,7 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 //******************************************************************************
 Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from, const std::string & to,
-                                    const uint64_t fromSize, const uint64_t toSize)
+                                    const amount_t fromSize, const amount_t toSize)
 {
     TransactionDescrPtr ptr;
 
@@ -2142,9 +2201,9 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
     json_spirit::Array info;
     info.push_back("");
     info.push_back(ptr->fromCurrency);
-    info.push_back(ptr->fromAmount);
+    info.push_back(ptr->fromAmount.GetHex());
     info.push_back(ptr->toCurrency);
-    info.push_back(ptr->toAmount);
+    info.push_back(ptr->toAmount.GetHex());
     std::string strInfo = write_string(json_spirit::Value(info));
     info.erase(info.begin());
 
@@ -2229,7 +2288,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         // Select utxos
         std::vector<wallet::UtxoEntry> outputsForUse;
         if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, ptr->fromAmount,
-                         TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
+                         xbridge::COIN, outputsForUse, utxoAmount, fee1, fee2))
         {
             revertOrder(ptr);
             xbridge::LogOrderMsg(id.GetHex(), "not accepting order, insufficient funds for <" + ptr->fromCurrency + ">", __FUNCTION__);
@@ -2469,7 +2528,7 @@ bool App::isValidAddress(const std::string & address, WalletConnectorPtr & conn)
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const std::string fromCurrency, const uint64_t fromAmount) {
+Error App::checkAcceptParams(const std::string fromCurrency, const amount_t fromAmount) {
     return checkAmount(fromCurrency, fromAmount, "");
 }
 
@@ -2492,7 +2551,7 @@ Error App::checkCreateParams(const std::string & fromCurrency,
 //******************************************************************************
 //******************************************************************************
 Error App::checkAmount(const std::string & currency,
-                       const uint64_t    & amount,
+                       const amount_t    & amount,
                        const std::string & address)
 {
     // check amount
@@ -2505,7 +2564,7 @@ Error App::checkAmount(const std::string & currency,
 
     // Check that wallet balance is larger than the smallest supported balance
     const auto & excluded = getAllLockedUtxos(currency);
-    if (conn->getWalletBalance(excluded, address) < (static_cast<double>(amount) / TransactionDescr::COIN)) {
+    if (conn->getWalletBalance(excluded, address) < (amount / xbridge::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
     }
@@ -3010,20 +3069,20 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
 }
 
 bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
-        const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
-        const CAmount requiredPrepTxFees, const CAmount requiredSplitSize, const CAmount requiredRemainder,
-        std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const
+        const amount_t requiredAmount, const int requiredUtxoCount, const amount_t requiredFeePerUtxo,
+        const amount_t requiredPrepTxFees, const amount_t requiredSplitSize, const amount_t requiredRemainder,
+        std::vector<wallet::UtxoEntry> & outputsForUse, amount_t & utxoAmount, amount_t & fees, bool & exactUtxoMatch) const
 {
     utxoAmount = 0;
     fees = 0;
     exactUtxoMatch = false;
 
     std::vector<wallet::UtxoEntry> utxos(outputs.begin(), outputs.end()); // copy
-    CAmount totalAmountNeeded = requiredAmount + fees;
-    CAmount totalExactSplitSizeNeeded = (requiredSplitSize + requiredFeePerUtxo) * requiredUtxoCount;
+    amount_t totalAmountNeeded = requiredAmount + fees;
+    amount_t totalExactSplitSizeNeeded = (requiredSplitSize + requiredFeePerUtxo) * requiredUtxoCount;
 
     // Find all ideal utxos (i.e. those matching split size and fees)
-    const CAmount requiredSplitSizeAmt = requiredSplitSize + requiredFeePerUtxo;
+    const amount_t requiredSplitSizeAmt = requiredSplitSize + requiredFeePerUtxo;
     for (auto it = utxos.begin(); it != utxos.end(); ) {
         auto & utxo = *it;
         if (utxo.camount() == requiredSplitSizeAmt && utxoAmount < totalExactSplitSizeNeeded) {
@@ -3033,7 +3092,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             it = utxos.erase(it); // remove selected utxo
             continue;
         }
-        if (requiredRemainder > 0 && utxo.camount() == requiredRemainder) {
+        if (requiredRemainder > amount_t(uint64_t(0)) && utxo.camount() == requiredRemainder) {
             utxoAmount += utxo.camount();
             fees += requiredFeePerUtxo;
             outputsForUse.push_back(utxo);
@@ -3050,7 +3109,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     // required utxos exists.
     totalAmountNeeded = requiredAmount + fees;
     // The <= 1 is the margin of error allowance
-    if ((outputsForUse.size() == requiredUtxoCount || (requiredRemainder > 0 && outputsForUse.size() == requiredUtxoCount + 1)) && totalAmountNeeded - utxoAmount <= 0) {
+    if ((outputsForUse.size() == requiredUtxoCount || (requiredRemainder > amount_t(uint64_t(0)) && outputsForUse.size() == requiredUtxoCount + 1)) && totalAmountNeeded - utxoAmount <= 0) {
         exactUtxoMatch = true;
         return true;
     }
@@ -3094,7 +3153,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             // At this point we want to pick utxos that are larger than the required split amount to limit
             // total utxos selected. If all the required split utxos have been selected then make sure
             // we have enough inputs to cover change.
-            if (utxo.camount() >= requiredSplitSize + requiredFeePerUtxo) {
+            if (utxo.camount() >= amount_t(requiredSplitSize + requiredFeePerUtxo)) {
                 utxoAmount += utxo.camount();
                 fees += requiredFeePerUtxo;
                 outputsForUse.push_back(utxo);
@@ -3646,7 +3705,7 @@ void App::Impl::onTimer()
         }
     }
 
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
 }
 

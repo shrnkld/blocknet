@@ -5,6 +5,8 @@
 #ifndef BLOCKNET_XBRIDGE_CURRENCY_H
 #define BLOCKNET_XBRIDGE_CURRENCY_H
 
+#include "xbridgedef.h"
+
 #include <boost/rational.hpp>
 
 #include <array>
@@ -100,7 +102,7 @@ namespace ccy {
     class Asset {
         // variables
         Currency _currency{};
-        Amount _amount{0};
+        Amount _amount{uint64_t(0)};
 
     public:
 

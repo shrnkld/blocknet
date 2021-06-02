@@ -27,9 +27,9 @@ struct XTxIn
 {
     std::string txid;
     uint32_t    n;
-    double      amount;
+    amount_t    amount;
 
-    XTxIn(std::string _txid, uint32_t _n, double _amount)
+    XTxIn(std::string _txid, uint32_t _n, amount_t _amount)
         : txid(_txid)
         , n(_n)
         , amount(_amount)
@@ -42,10 +42,10 @@ namespace rpc
 {
 struct WalletInfo
 {
-    double   relayFee;
-    uint32_t blocks;
-    int64_t mediantime;
-    uint256 bestblockhash;
+    double      relayFee;
+    uint32_t    blocks;
+    int64_t     mediantime;
+    uint256     bestblockhash;
 
     WalletInfo()
         : relayFee(0)
@@ -84,15 +84,17 @@ public:
 public:
     // wallet RPC
 
-    virtual bool getNewAddress(std::string & addr) = 0;
+    virtual bool getNewAddress(std::string & addr, const std::string & type = "") = 0;
 
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
     double getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
 
-    std::string getNewTokenAddress();
+    std::string getNewTokenAddress(const std::string & type = "");
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
+
+    virtual bool loadWallet(const std::string & walletName) const = 0;
 
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const = 0;
 
@@ -120,6 +122,7 @@ public:
     virtual bool isValidAddress(const std::string & addr) const = 0;
 
     virtual bool isDustAmount(const double & amount) const = 0;
+    virtual bool isDustAmount(const amount_t & amount) const = 0;
 
     virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
 
@@ -185,8 +188,8 @@ public:
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
-    virtual bool splitUtxos(CAmount splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
-                            std::set<COutPoint> utxos, CAmount & totalSplit, CAmount & splitIncFees, int & splitCount,
+    virtual bool splitUtxos(amount_t splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
+                            std::set<COutPoint> utxos, amount_t & totalSplit, amount_t & splitIncFees, int & splitCount,
                             std::string & txId, std::string & rawTx, std::string & failReason) = 0;
 
     virtual bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,

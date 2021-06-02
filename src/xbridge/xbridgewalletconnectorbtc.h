@@ -9,6 +9,7 @@
 #define BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORBTC_H
 
 #include <xbridge/xbridgewalletconnector.h>
+#include "xbridge/util/logger.h"
 
 #include <event2/buffer.h>
 #include <rpc/protocol.h>
@@ -26,6 +27,8 @@
 #include <json/json_spirit_writer_template.h>
 
 #include <boost/lexical_cast.hpp>
+
+// #define XBRIDGE_LOG_RPC_CALLS
 
 //*****************************************************************************
 //*****************************************************************************
@@ -146,6 +149,11 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
 
     // Attach request data
     const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);
+
+#ifdef XBRIDGE_LOG_RPC_CALLS
+    LOG() << "XBRIDGE RPC CALL <<<--- " << strMethod << " " << tostring;
+#endif
+
     UniValue toval;
     if (!toval.read(tostring))
         throw std::runtime_error(strprintf("failed to decode json_spirit data: %s", tostring));
@@ -178,6 +186,10 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
     else if (response.body.empty())
         throw std::runtime_error("no response from server");
 
+#ifdef XBRIDGE_LOG_RPC_CALLS
+    LOG() << "XBRIDGE RPC CALL --->>> " << response.body;
+#endif
+
     // Parse reply
     json_spirit::Value valReply;
     if (!json_spirit::read_string(response.body, valReply))
@@ -194,10 +206,12 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
 template <class CryptoProvider>
 class BtcWalletConnector : public WalletConnector
 {
-    class Impl;
-
 public:
-    BtcWalletConnector() {}
+    BtcWalletConnector()
+        : m_isSignMessageWithWallet(true)
+        , m_isSignMessageWithPrivKey(true)
+    {}
+
 
     bool init();
 
@@ -211,9 +225,11 @@ public:
 
     bool getInfo(rpc::WalletInfo & info) const;
 
+    bool loadWallet(const std::string & walletName) const;
+
     bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const;
 
-    bool getNewAddress(std::string & addr);
+    bool getNewAddress(std::string & addr, const std::string & type = "");
 
     bool getTxOut(wallet::UtxoEntry & entry);
 
@@ -238,6 +254,7 @@ public:
     bool isValidAddress(const std::string & addr) const;
 
     bool isDustAmount(const double & amount) const;
+    bool isDustAmount(const amount_t & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 
@@ -303,8 +320,8 @@ public:
                               std::string & txId,
                               std::string & rawTx) override;
 
-    bool splitUtxos(CAmount splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
-                    std::set<COutPoint> utxos, CAmount & totalSplit, CAmount & splitIncFees, int & splitCount,
+    bool splitUtxos(amount_t splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
+                    std::set<COutPoint> utxos, amount_t & totalSplit, amount_t & splitIncFees, int & splitCount,
                     std::string & txId, std::string & rawTx, std::string & failReason) override;
 
     bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,
@@ -314,6 +331,10 @@ public:
 
 protected:
     CryptoProvider m_cp;
+
+  private:
+    bool m_isSignMessageWithWallet;
+    bool m_isSignMessageWithPrivKey;
 };
 
 } // namespace xbridge

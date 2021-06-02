@@ -23,9 +23,9 @@ namespace {
                (a.toCurrency == b.fromCurrency.to_string()
                 && a.fromCurrency == b.toCurrency.to_string());
     }
-    template<typename T> bool is_too_small(T amount) {
-        return ::fabs(amount) < std::numeric_limits<double>::epsilon();
-    }
+    // template<typename T> bool is_too_small(T amount) {
+    //     return ::fabs(amount) < std::numeric_limits<double>::epsilon();
+    // }
     void transaction_filter(std::vector<CurrencyPair>& matches,
                             const xbridge::TransactionDescr& tr,
                             const xQuery& query)
@@ -33,13 +33,13 @@ namespace {
         if (not(tr.state == xbridge::TransactionDescr::trFinished)) return;
         if (not query.period.contains(tr.txtime)) return;
         if (not is_equivalent_pair(tr, query)) return;
-        if (is_too_small(tr.fromAmount) || is_too_small(tr.toAmount)) return;
+        if (tr.fromAmount == 0 || tr.toAmount == 0) return;
         matches.emplace_back(query.with_txids == xQuery::WithTxids::Included
                              ? tr.id.GetHex() : xid_t{},
                              ccy::Asset{ccy::Currency{tr.fromCurrency,
-                                         xbridge::TransactionDescr::COIN}, tr.fromAmount},
+                                         xbridge::COIN}, tr.fromAmount},
                              ccy::Asset{ccy::Currency{tr.toCurrency,
-                                         xbridge::TransactionDescr::COIN},   tr.toAmount},
+                                         xbridge::COIN},   tr.toAmount},
                              tr.txtime);
     }
     void updateXSeriesHelper(std::vector<xAggregate>& series,
@@ -185,7 +185,7 @@ xAggregate xAggregate::inverse() const {
 }
 
 void xAggregate::update(const CurrencyPair& x, xQuery::WithTxids with_txids) {
-    price_t price{x.price<price_t>()};
+    price_t price = x.price<price_t>();
     if (open == 0) {
         open = high = low = price;
     }

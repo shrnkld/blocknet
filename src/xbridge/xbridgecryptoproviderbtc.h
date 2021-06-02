@@ -12,11 +12,14 @@
 #include <uint256.h>
 
 #include <vector>
+#include <string>
 
 //******************************************************************************
 //******************************************************************************
 namespace xbridge
 {
+
+const std::string messageMagic("XBridge Signed Message:\n");
 
 //******************************************************************************
 //******************************************************************************
@@ -25,6 +28,13 @@ class BtcCryptoProvider
 public:
     BtcCryptoProvider();
     ~BtcCryptoProvider();
+
+public:
+    static constexpr unsigned int privateKeySize            = 32;
+    static constexpr unsigned int publicKeySize             = 65;
+    static constexpr unsigned int compressedPublicKeySize   = 33;
+    static constexpr unsigned int signatureSize             = 72;
+    static constexpr unsigned int compactSignatureSize      = 65;
 
 public:
     bool check(const std::vector<unsigned char> & key);
@@ -37,6 +47,13 @@ public:
     bool verify(const std::vector<unsigned char> & pubkey,
                 const uint256 & data,
                 const std::vector<unsigned char> & signature);
+
+    bool signCompact(const std::vector<unsigned char> & key,
+                     const uint256 & data,
+                     std::vector<unsigned char> & signature);
+    bool recoverCompact(const uint256 & data,
+                        const std::vector<unsigned char> & signature,
+                        std::vector<unsigned char> & pubkey);
 
 private:
     secp256k1_context * context;

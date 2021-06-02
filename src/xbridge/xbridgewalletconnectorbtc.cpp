@@ -6,7 +6,7 @@
 //*****************************************************************************
 
 #include <xbridge/xbridgewalletconnectorbtc.h>
-
+#include "xbridgetransactiondescr.h"
 #include <xbridge/util/logger.h>
 #include <xbridge/util/xutil.h>
 #include <xbridge/xbitcoinaddress.h>
@@ -34,6 +34,79 @@ namespace rpc
 {
 
 using namespace json_spirit;
+
+//*****************************************************************************
+//*****************************************************************************
+bool loadwallet(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                const std::string & walletName)
+{
+    try
+    {
+        LOG() << "rpc call <loadwallet>";
+
+        Array params;
+        params.push_back(walletName);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "loadwallet", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error, but RPC_WALLET_ALREADY_LOADED = -35
+            Object o = error.get_obj();
+            const Value & code = find_value(o, "code");
+            if (code.type() != int_type || code.get_int() != -35)
+            {
+                LOG() << "error: " << write_string(error, false);
+                // int code = find_value(error.get_obj(), "code").get_int();
+                return false;
+            }
+        }
+
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        else
+        {
+            Object o = result.get_obj();
+
+            const Value & name = find_value(o, "name");
+            if (name.type() != null_type)
+            {
+                if (name.get_str() != walletName)
+                {
+                    WARN() << "loadwallet result is <" << name.get_str() << "> but requested <" << walletName << ">";
+                }
+            }
+
+            const Value & warn = find_value(o, "warning");
+            if (warn.type() != null_type)
+            {
+                if (!warn.get_str().empty())
+                {
+                    WARN() << "loadwallet warning: <" << warn.get_str();
+                }
+            }
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "loadwallet exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
 
 //*****************************************************************************
 //*****************************************************************************
@@ -126,7 +199,7 @@ bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
     }
     catch (std::exception & e)
     {
-        LOG() << "getinfo exception " << e.what();
+        LOG() << "getgetnetworkinfoinfo exception " << e.what();
         return false;
     }
 
@@ -179,7 +252,108 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
     }
     catch (std::exception & e)
     {
-        LOG() << "getinfo exception " << e.what();
+        LOG() << "getblockchaininfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool getwalletinfo(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip, const std::string & rpcport,
+                   std::string & currentWallet)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getwalletinfo", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o          = result.get_obj();
+        Value  walletName = find_value(o, "walletname");
+        if (walletName.is_null())
+        {
+            // not supported
+            currentWallet.clear();
+        }
+        else
+        {
+            currentWallet = walletName.get_str();
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getwalletinfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool listwallets(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                std::vector<std::string> & wallets)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listwallets", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != array_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Array arr = result.get_array();
+        for (const Value & v : arr)
+        {
+            wallets.emplace_back(v.get_str());
+        }
+
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "listwallets exception " << e.what();
         return false;
     }
 
@@ -882,27 +1056,56 @@ bool getNewAddress(const std::string & rpcuser,
                    const std::string & rpcpasswd,
                    const std::string & rpcip,
                    const std::string & rpcport,
-                   std::string & addr)
+                   std::string & addr,
+                   const std::string type = "")
 {
     try
     {
         LOG() << "rpc call <getnewaddress>";
 
-        Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
-
-        // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
-
-        if (error.type() != null_type)
+        Object reply;
+        
+        do
         {
+            Array params;
+            if (!type.empty())
+            {
+                params.push_back("");
+                params.push_back(type);
+            }
+            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+
+            // Parse reply
+            Value error  = find_value(reply, "error");
+            if (error.type() == null_type)
+            {
+                break;
+            }
+
+            int errorCode = find_value(error.get_obj(), "code").get_int();
+            if (!type.empty() && errorCode != -5)
+            {
+                // check errorCode == -5, Unknown address type
+                // try without type, type not supported?
+                params.clear();
+                reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+            }
+
+            error  = find_value(reply, "error");
+            if (error.type() == null_type)
+            {
+                break;
+            }
+
             // Error
             LOG() << "error: " << write_string(error, false);
             // int code = find_value(error.get_obj(), "code").get_int();
             return false;
-        }
-        else if (result.type() != str_type)
+        } 
+        while (false);
+        
+        const Value & result = find_value(reply, "result");
+        if (result.type() != str_type)
         {
             // Result
             LOG() << "result not an string " <<
@@ -1420,9 +1623,14 @@ bool getRawMempool(const std::string & rpcuser, const std::string & rpcpasswd,
 
 } // namespace rpc
 
+//*****************************************************************************
+//*****************************************************************************
 namespace
 {
 
+
+//*****************************************************************************
+//*****************************************************************************
 /**
  * @brief SignatureHash  compute hash of transaction signature
  * @param scriptCode
@@ -1512,6 +1720,15 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransactionPtr & txTo,
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
+    // try to load wallet
+    if (!walletName.empty())
+    {
+        if (!loadWallet(walletName))
+        {
+            return false;
+        }
+    }
+
     // convert prefixes
     addrPrefix   = static_cast<char>(boost::lexical_cast<int>(addrPrefix.data()));
     scriptPrefix = static_cast<char>(boost::lexical_cast<int>(scriptPrefix.data()));
@@ -1520,7 +1737,9 @@ bool BtcWalletConnector<CryptoProvider>::init()
     // wallet info
     rpc::WalletInfo info;
     if (!this->getInfo(info))
+    {
         return false;
+    }
 
     // Calculate dust
     dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
@@ -1599,6 +1818,36 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::loadWallet(const std::string & walletName) const
+{
+    std::vector<std::string> wallets;
+    if (!rpc::listwallets(m_user, m_passwd, m_ip, m_port, wallets))
+    {
+        // not supported
+        return true;
+    }
+
+    if (std::find(wallets.begin(), wallets.end(), walletName) != wallets.end())
+    {
+        // already loaded
+        return true;
+    }
+
+    LOG() << currency << " loading <" << walletName << "> wallet " << __FUNCTION__;
+
+    if (!rpc::loadwallet(m_user, m_passwd, m_ip, m_port, walletName))
+    {
+        WARN() << currency << " loadwallet failed. Is the wallet name correct? "
+                << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
@@ -1640,9 +1889,9 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr)
+bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr, const std::string & type)
 {
-    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
+    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr, type))
     {
         LOG() << "rpc::getNewAddress failed " << __FUNCTION__;
         return false;
@@ -1701,14 +1950,35 @@ bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address
                                      const std::string & message,
                                      std::string & signature)
 {
-    if (!rpc::signMessage(m_user, m_passwd, m_ip, m_port,
-                          address, message, signature))
+    // if (m_isSignMessageWithWallet)
     {
+        if (rpc::signMessage(m_user, m_passwd, m_ip, m_port,
+                             address, message, signature))
+        {
+            return true;
+        }
+
         LOG() << "rpc::signMessage failed " << __FUNCTION__;
-        return false;
+        // m_isSignMessageWithWallet = false;
     }
 
-    return true;
+    // if (m_isSignMessageWithPrivKey)
+    // {
+    //     CHashWriter ss(SER_GETHASH, 0);
+    //     ss << messageMagic;
+    //     ss << message;
+
+    //     if (signCompact(ss.GetHash(), signature))
+    //     {
+    //         // TODO maybe encodebase64?
+    //         return true;
+    //     }
+
+    //     LOG() << "crypto provider sign message failed " << __FUNCTION__;
+    //     m_isSignMessageWithWallet = false;
+    // }
+
+    return false;
 }
 
 //******************************************************************************
@@ -1718,6 +1988,9 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
                                        const std::string & message,
                                        const std::string & signature)
 {
+    // TODO
+    // m_isSignMessageWithWallet?
+    // m_isSignMessageWithPrivKey?
     if (!rpc::verifyMessage(m_user, m_passwd, m_ip, m_port,
                             address, message, signature))
     {
@@ -1902,6 +2175,15 @@ bool BtcWalletConnector<CryptoProvider>::isDustAmount(const double & amount) con
     // cast to int because amount could be negative
     return static_cast<int64_t>(amount * static_cast<int64_t>(COIN)) < static_cast<int64_t>(dustAmount);
 }
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::isDustAmount(const amount_t & amount) const
+{
+    return (amount / xbridge::COIN * static_cast<int64_t>(COIN)).Get64() < static_cast<int64_t>(dustAmount);
+}
+
 
 //******************************************************************************
 //******************************************************************************
@@ -2625,10 +2907,10 @@ bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vec
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, const std::string addr,
+bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, const std::string addr,
                                                     const bool includeFees, const std::set<wallet::UtxoEntry> excluded,
-                                                    const std::set<COutPoint> utxos, CAmount & totalSplit,
-                                                    CAmount & splitIncFees, int & splitCount, std::string & txId,
+                                                    const std::set<COutPoint> utxos, amount_t & totalSplit,
+                                                    amount_t & splitIncFees, int & splitCount, std::string & txId,
                                                     std::string & rawTx, std::string & failReason)
 {
     const auto hasUserSpecifiedUtxos = !utxos.empty();
@@ -2662,10 +2944,10 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, c
         unspent = newUnspent; // only use user specified utxos
     }
 
-    const CAmount fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
-    const CAmount fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
-    const CAmount feesPerUtxo = fee1 + fee2;
-    const CAmount splitSize = splitAmount + (includeFees ? feesPerUtxo : 0);
+    const amount_t fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
+    const amount_t fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
+    const amount_t feesPerUtxo = fee1 + fee2;
+    const amount_t splitSize = splitAmount + (includeFees ? feesPerUtxo : amount_t(uint64_t(0)));
 
     if (!hasUserSpecifiedUtxos) {
         // Remove all utxos that already match the expected size or that don't match the specified address
@@ -2684,14 +2966,14 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, c
     if (unspent.size() > 100)
         unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
 
-    CAmount vinsTotal{0};
+    amount_t vinsTotal{uint64_t(0)};
     std::vector<xbridge::XTxIn> vins;
     for (const auto & vin : unspent) {
         vinsTotal += vin.camount();
         vins.emplace_back(vin.txId, vin.vout, vin.amount);
     }
 
-    auto outputCount = static_cast<int>(vinsTotal / splitSize);
+    auto outputCount = (vinsTotal / splitSize).Get64();
     if (outputCount < 1) {
         failReason = "already split all unused utxos in address [" + addr + "]";
         return false; // not enough coin
@@ -2699,25 +2981,25 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, c
     if (outputCount > 100)
         outputCount = 100;
 
-    const CAmount remainder = vinsTotal - (outputCount * splitSize);
-    std::vector<std::pair<std::string, CAmount>> vouts;
+    const amount_t remainder = vinsTotal - (xbridge::amount_t(outputCount) * splitSize);
+    std::vector<std::pair<std::string, amount_t>> vouts;
     for (int i = 0; i < outputCount; ++i)
         vouts.emplace_back(addr, splitSize);
 
-    const CAmount txFees = xBridgeIntFromReal(minTxFee1(vins.size(), vouts.size()));
-    const CAmount change = remainder - txFees;
+    const amount_t txFees = xBridgeIntFromReal(minTxFee1(vins.size(), vouts.size()));
+    const amount_t change = remainder - txFees;
     // add remainder vout if not dust
     if (!isDustAmount(xBridgeValueFromAmount(change)))
         vouts.emplace_back(addr, change);
     else {
         // Remove any utxos consumed by fees
-        CAmount feesLeft = txFees;
-        while (feesLeft > 0 && !vouts.empty()) {
+        amount_t feesLeft = txFees;
+        while (feesLeft > xbridge::amount_t(uint64_t(0)) && !vouts.empty()) {
             auto & vout = vouts[vouts.size()-1];
-            const CAmount voutAmount = vout.second;
-            const CAmount voutNewAmount = voutAmount - feesLeft;
+            const amount_t voutAmount = vout.second;
+            const amount_t voutNewAmount = voutAmount - feesLeft;
             // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
-            if (voutNewAmount <= 0) {
+            if (voutNewAmount <= xbridge::amount_t(uint64_t(0))) {
                 vouts.erase(vouts.begin() + vouts.size());
                 outputCount -= 1;
                 feesLeft -= voutAmount; // subtract vout amount from leftover fees

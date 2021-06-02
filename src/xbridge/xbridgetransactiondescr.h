@@ -27,17 +27,14 @@ namespace xbridge
 boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
 boost::posix_time::ptime intToTime(const uint64_t& number);
 
+const arith_uint128  COIN     = 1000000000000000000;
+// const uint64_t       MAX_COIN = 100000000;
+
 //******************************************************************************
 //******************************************************************************
 struct TransactionDescr
 {
     CCriticalSection _lock;
-
-    enum
-    {
-        COIN = 1000000,
-        MAX_COIN = 100000000
-    };
 
     enum State
     {
@@ -234,17 +231,17 @@ struct TransactionDescr
 
     std::vector<unsigned char> from;
     std::string                fromCurrency;
-    uint64_t                   fromAmount;
+    amount_t                   fromAmount;
     std::string                fromAddr;
     std::vector<unsigned char> to;
     std::string                toCurrency;
-    uint64_t                   toAmount;
+    amount_t                   toAmount;
     std::string                toAddr;
 
     std::string                origFromCurrency;
-    uint64_t                   origFromAmount{0};
+    amount_t                   origFromAmount{uint64_t(0)};
     std::string                origToCurrency;
-    uint64_t                   origToAmount{0};
+    amount_t                   origToAmount{uint64_t(0)};
 
     uint32_t                   lockTime;
     uint32_t                   opponentLockTime;
@@ -318,7 +315,7 @@ struct TransactionDescr
     // repost partial order after completion
     bool     repostOrder{false};
     // partial order amounts
-    uint64_t minFromAmount{0};
+    amount_t minFromAmount{uint64_t(0)};
 
     // Track if tx is historical tx
     bool historical{false};

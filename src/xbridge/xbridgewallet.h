@@ -8,6 +8,7 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGEWALLET_H
 #define BLOCKNET_XBRIDGE_XBRIDGEWALLET_H
 
+#include "xbridgedef.h"
 #include <primitives/transaction.h>
 #include <serialize.h>
 #include <sync.h>
@@ -25,7 +26,7 @@
 //*****************************************************************************
 namespace xbridge
 {
-    CAmount xBridgeIntFromReal(double amount);
+    amount_t xBridgeIntFromReal(double amount);
 
 //*****************************************************************************
 //*****************************************************************************
@@ -62,7 +63,7 @@ struct UtxoEntry
         return { uint256S(txId), vout };
     }
 
-    CAmount camount() const {
+    amount_t camount() const {
         return xBridgeIntFromReal(amount);
     }
 
@@ -119,6 +120,7 @@ public:
         , serviceNodeFee(.015)
         , txWithTimeField(false)
         , isLockCoinsSupported(false)
+        , walletName("")
     {
         addrPrefix.resize(1, '\0');
         scriptPrefix.resize(1, '\0');
@@ -156,6 +158,8 @@ public:
         cashAddrPrefix              = other.cashAddrPrefix;
 
         mediantime                  = other.mediantime; // useful for fork management
+
+        walletName                  = other.walletName;
 
         return *this;
     }
@@ -211,6 +215,9 @@ public:
     int64_t                      mediantime{0};
     // cash address prefix
     std::string                  cashAddrPrefix;
+
+    // wallet name (used for multiwallet node, etc. bitcoin core, in loadwallet rpc call)
+    std::string                  walletName;
 };
 
 } // namespace xbridge
