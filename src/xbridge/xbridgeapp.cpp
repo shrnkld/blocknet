@@ -1754,8 +1754,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("orderid", "unknown");
                     log_obj.pushKV("from_currency", connFrom->currency);
-                    xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
-                    return xbridge::Error::INVALID_AMOUNT;
+                    xbridge::LogOrderMsg(log_obj, "failed to create order, UTXOs are empty and the maximum number of utxos on the order was exceeded", __FUNCTION__);
+                    return xbridge::Error::UTXOS_EMPTY;
                 }
             } else { // If no user supplied utxos, create the partial order prep transaction
                 std::vector<wallet::UtxoEntry> existingUtxos;
@@ -1788,7 +1788,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     log_obj.pushKV("change_amount", xBridgeStringValueFromPrice(changeAmount, connFrom->COIN));
                     log_obj.pushKV("from_currency", connFrom->currency);
                     xbridge::LogOrderMsg(log_obj, "failed to create order, insufficient funds on partial order", __FUNCTION__);
-                    return xbridge::Error::INVALID_AMOUNT;
+                    return xbridge::Error::INSUFFICIENT_FUNDS_PARTIAL_ORDER;
                 }
                 if (!connFrom->isDustAmount(changeAmount))
                     vouts.emplace_back(ptr->fromAddr, changeAmount);
@@ -1843,7 +1843,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     log_obj.pushKV("orderid", "unknown");
                     log_obj.pushKV("from_currency", connFrom->currency);
                     xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
-                    return xbridge::Error::INVALID_AMOUNT;
+                    return xbridge::Error::EXCEEDED_MAX_UTXOS;
                 }
 
                 if (ptr->usedCoins.empty() || !lockCoins(ptr->fromCurrency, ptr->usedCoins)) {

@@ -70,6 +70,12 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "The order information could not be written to the blockchain";
         case INVALID_PARTIAL_ORDER:
             return "Partial orders not allowed for this transaction";
+        case UTXOS_EMPTY:
+            return "Failed to create order, UTXOS_EMPTY " + argument;
+        case INSUFFICIENT_FUNDS_PARTIAL_ORDER:
+            return "failed to create order, insufficient funds on partial order " + argument;
+        case EXCEEDED_MAX_UTXOS:
+            return "failed to create order, the maximum number of utxos on the order was exceeded " + argument;
     }
     return "invalid error value";
 }
