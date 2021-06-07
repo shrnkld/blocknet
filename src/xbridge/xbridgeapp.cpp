@@ -1842,7 +1842,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("orderid", "unknown");
                     log_obj.pushKV("from_currency", connFrom->currency);
-                    log_obj.pushKV("Used UTXOs", ptr->usedCoins.size());
+                    log_obj.pushKV("Used UTXOs", static_cast<int>(ptr->usedCoins.size()));
                     xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
                     return xbridge::Error::EXCEEDED_MAX_UTXOS;
                 }
