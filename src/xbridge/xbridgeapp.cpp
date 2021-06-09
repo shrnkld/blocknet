@@ -50,6 +50,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 #include <openssl/rand.h>
 #include <openssl/md5.h>
@@ -268,7 +269,7 @@ protected:
 App::Impl::Impl()
     : m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
     , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-    , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
+    , m_timer(m_timerIo, boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)))
 {
 
 }
@@ -1841,6 +1842,22 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     unlockCoins(ptr->fromCurrency, ptr->usedCoins);
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("orderid", "unknown");
+                    log_obj.pushKV("hubAddress   ",std::string(ptr->hubAddress.begin(), ptr->hubAddress.end()));
+                    log_obj.pushKV("sPubKey      ",std::string(ptr->sPubKey.begin(), ptr->sPubKey.end()));
+                    log_obj.pushKV("fromAddr     ",ptr->fromAddr);
+                    log_obj.pushKV("from         ",std::string( ptr->from.begin(),  ptr->from.end()));
+                    log_obj.pushKV("fromCurrency ",ptr->fromCurrency);
+                    log_obj.pushKV("fromAmount   ",ptr->fromAmount);
+                    log_obj.pushKV("origFromCurrency",ptr->origFromCurrency);
+                    log_obj.pushKV("origFromAmount",ptr->origFromAmount);
+                    log_obj.pushKV("toAddr       ",ptr->toAddr);
+                    log_obj.pushKV("to           ",std::string( ptr->to.begin(),  ptr->to.end()));
+                    log_obj.pushKV("toCurrency   ",ptr->toCurrency);
+                    log_obj.pushKV("toAmount     ",ptr->toAmount);
+                    log_obj.pushKV("origToCurrency",ptr->origToCurrency);
+                    log_obj.pushKV("origToAmount ",ptr->origToAmount);
+                    log_obj.pushKV("blockHash    ",ptr->blockHash.ToString());
+                    log_obj.pushKV("role         ",std::string(&ptr->role));
                     log_obj.pushKV("from_currency", connFrom->currency);
                     log_obj.pushKV("Used UTXOs", static_cast<int>(ptr->usedCoins.size()));
                     xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
@@ -3647,7 +3664,7 @@ void App::Impl::onTimer()
         }
     }
 
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
 }
 
