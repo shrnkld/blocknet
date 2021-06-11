@@ -51,6 +51,8 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
+#include <signal.h>
+#include <unistd.h>
 
 #include <openssl/rand.h>
 #include <openssl/md5.h>
@@ -1860,6 +1862,14 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     log_obj.pushKV("role         ",std::string(&ptr->role));
                     log_obj.pushKV("from_currency", connFrom->currency);
                     log_obj.pushKV("Used UTXOs", static_cast<int>(ptr->usedCoins.size()));
+#ifdef __linux__
+                    std::string s ("Core dumped. Please send the ");
+                    s.append(get_current_dir_name()).append("/core file to blocknet developers team.");
+                    log_obj.pushKV("ATTENTION!",s);
+                    xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
+                    
+/*!!!!!!!!!!*/      raise(SIGSEGV);         //!!!!!!!!!!!!!!
+#endif
                     xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
                     return xbridge::Error::EXCEEDED_MAX_UTXOS;
                 }
