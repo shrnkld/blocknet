@@ -146,6 +146,7 @@ namespace xbridge
 
     void LogOrderMsg(const std::string & orderId, const std::string & msg, const std::string & func);
     void LogOrderMsg(UniValue o, const std::string & msg, const std::string & func);
+    void LogOrderMsgPretty(UniValue o, const std::string & msg, const std::string & func, unsigned int prettyIndent=1, unsigned int indentLevel=4);
     void LogOrderMsg(xbridge::TransactionDescrPtr & ptr, const std::string & func);
     void LogOrderMsg(xbridge::TransactionPtr & ptr, const std::string & func);
 

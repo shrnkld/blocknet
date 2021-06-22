@@ -402,6 +402,11 @@ void LogOrderMsg(UniValue o, const std::string & msg, const std::string & func) 
     o.pushKV("msg", msg);
     LOG() << o.write();
 }
+void LogOrderMsgPretty(UniValue o, const std::string & msg, const std::string & func, unsigned int prettyIndent, unsigned int indentLevel) {
+    o.pushKV("function", func);
+    o.pushKV("msg", msg);
+    LOG() << o.write(prettyIndent, indentLevel);
+}
 void LogOrderMsg(xbridge::TransactionDescrPtr & ptr, const std::string & func) {
     LOG() << func << " " << ptr;
 }
