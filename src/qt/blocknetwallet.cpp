@@ -14,6 +14,7 @@
 #include <qt/askpassphrasedialog.h>
 #include <qt/optionsmodel.h>
 #include <qt/platformstyle.h>
+#include <qt/receivepage.h>///
 #include <qt/receivecoinsdialog.h>
 #include <qt/signverifymessagedialog.h>
 #include <qt/transactionfilterproxy.h>
@@ -23,6 +24,7 @@
 #include <util/system.h>
 
 #include <QSettings>
+
 
 BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *platformStyle, QFrame *parent)
                               : QFrame(parent), node(node), platformStyle(platformStyle)
@@ -182,14 +184,21 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             screen = quickSend;
             break;
         }
-        case BlocknetPage::REQUEST: {
+        case BlocknetPage::RECEIVE: {
             std::string platformName = gArgs.GetArg("-uiplatform", "other");
             auto platformStyle = PlatformStyle::instantiate(QString::fromStdString(platformName));
             if (!platformStyle) // Fall back to "other" if specified name not found
                 platformStyle = PlatformStyle::instantiate("other");
-            auto *recieve = new ReceiveCoinsDialog(platformStyle);
-            recieve->setModel(walletModel);
-            screen = recieve;
+            
+            /*auto *receive = new ReceiveCoinsDialog(platformStyle);
+            receive->setModel(walletModel);
+            screen = receive;*/
+
+            auto *receive = new ReceivePage(platformStyle, walletModel);
+            connect(receive, &ReceivePage::dashboard, this, &BlocknetWallet::goToDashboard);
+            receive->setModel(walletModel);
+            screen = receive;
+            
             break;
         }
         case BlocknetPage::HISTORY: {
@@ -432,7 +441,7 @@ void BlocknetWallet::gotoVerifyMessageTab(QString addr) {
         signVerifyMessageDialog->setAddress_VM(addr);
 }
 
-void BlocknetWallet::processNewTransaction(const QModelIndex& parent, int start, int /*end*/) {
+void BlocknetWallet::processNewTransaction(const QModelIndex& parent, int start, int /*end*/ ) {
     // Prevent balloon-spam when initial block download is in progress
     if (!walletModel || !clientModel || clientModel->node().isInitialBlockDownload())
         return;

@@ -47,16 +47,16 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     addressBook->setLabel(tr("Address Book"));
 
     accounts = new BlocknetIconLabel;
-    accounts->setIcon(":/redesign/Active/RequestFundsIcon.png", ":/redesign/Inactive/RequestFundsIcon.png");
+    accounts->setIcon(":/redesign/Active/BalancesIcon.png", ":/redesign/Inactive/BalancesIcon.png");
     accounts->setLabel(tr("Balances"));
 
     sendFunds = new BlocknetIconLabel;
     sendFunds->setIcon(":/redesign/Active/SendFundsIcon.png", ":/redesign/Inactive/SendFundsIcon.png");
     sendFunds->setLabel(tr("Send Funds"));
 
-    requestFunds = new BlocknetIconLabel;
-    requestFunds->setIcon(":/redesign/Active/RequestFundsIcon.png", ":/redesign/Inactive/RequestFundsIcon.png");
-    requestFunds->setLabel(tr("Request Funds"));
+    receiveFunds = new BlocknetIconLabel;
+    receiveFunds->setIcon(":/redesign/Active/RequestFundsIcon.png", ":/redesign/Inactive/RequestFundsIcon.png");
+    receiveFunds->setLabel(tr("Receive Funds"));
 
     transactionHistory = new BlocknetIconLabel;
     transactionHistory->setIcon(":/redesign/Active/TransactionHistoryIcon.png", ":/redesign/Inactive/TransactionHistoryIcon.png");
@@ -88,7 +88,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     group->addButton(addressBook, ADDRESSBOOK);
     group->addButton(accounts, ACCOUNTS);
     group->addButton(sendFunds, SEND);
-//    group->addButton(requestFunds, REQUEST);
+    group->addButton(receiveFunds, RECEIVE);
     group->addButton(transactionHistory, HISTORY);
     group->addButton(snodes, SNODES);
     group->addButton(proposals, PROPOSALS);
@@ -132,7 +132,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     box3->setLayout(new QVBoxLayout);
     box3->layout()->setSpacing(BGU::spi(8));
     box3->layout()->addWidget(sendFunds);
-//    box3->layout()->addWidget(requestFunds);
+    box3->layout()->addWidget(receiveFunds);
     box3->layout()->addWidget(transactionHistory);
     box3->layout()->addWidget(snodes);
     box3->layout()->addWidget(proposals);
@@ -164,7 +164,9 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     layout->addStretch(1);
     layout->addWidget(boxVersion);
 
-    announcements->setObjectName("disabled"); announcements->setEnabled(false); announcements->setToolTip(tr("Coming soon"));
+    announcements->setObjectName("disabled"); 
+    announcements->setEnabled(false); 
+    announcements->setToolTip(tr("Coming soon"));
 }
 
 void BlocknetLeftMenu::setBalance(CAmount balance, int unit) {

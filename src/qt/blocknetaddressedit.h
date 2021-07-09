@@ -33,6 +33,7 @@ public:
     QString getKey();
     QString getType();
     CPubKey getPubKey();
+    void setMinimalView(bool); //hide extra ui controls 
 
 Q_SIGNALS:
     void cancel();

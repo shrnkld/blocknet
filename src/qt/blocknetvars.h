@@ -20,7 +20,7 @@ enum BlocknetPage {
     ACCOUNTS,
     SEND,
     QUICKSEND,
-    REQUEST,
+    RECEIVE,
     HISTORY,
     SNODES,
     PROPOSALS,

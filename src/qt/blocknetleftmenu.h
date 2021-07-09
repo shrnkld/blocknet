@@ -43,7 +43,7 @@ private:
     BlocknetIconLabel *addressBook;
     BlocknetIconLabel *accounts;
     BlocknetIconLabel *sendFunds;
-    BlocknetIconLabel *requestFunds;
+    BlocknetIconLabel *receiveFunds;
     BlocknetIconLabel *transactionHistory;
     BlocknetIconLabel *snodes;
     BlocknetIconLabel *proposals;

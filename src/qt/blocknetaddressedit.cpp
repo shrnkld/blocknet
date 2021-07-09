@@ -301,6 +301,13 @@ BlocknetAddressEdit::BlocknetAddressEdit(bool editMode, const QString &t, const 
         connect(createAddressTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetAddressEdit::onPrivateKey);
 }
 
+void BlocknetAddressEdit::setMinimalView(bool toggle)
+{
+    createAddressTi->setVisible(!toggle);
+    myAddressBtn->setVisible(!toggle);
+    otherUserBtn->setVisible(!toggle);
+}
+
 QSize BlocknetAddressEdit::sizeHint() const {
     return { addressTi->width() + BGU::spi(60), 7 * BGU::spi(50) };
 }

@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+
 #include <wallet/wallet.h>
 
 #include <qt/receivecoinsdialog.h>
@@ -148,7 +149,7 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
 
     QString address;
     QString label = ui->reqLabel->text();
-    /* Generate new receiving address */
+    //Generate new receiving address
     OutputType address_type;
     if (ui->useBech32->isChecked()) {
         address_type = OutputType::BECH32;
@@ -168,7 +169,7 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
     dialog->show();
     clear();
 
-    /* Store request for later reference */
+    //Store request for later reference
     model->getRecentRequestsTableModel()->addNewRequest(info);
 }
 

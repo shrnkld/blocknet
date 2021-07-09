@@ -99,6 +99,7 @@
         <file alias="Active/DashboardIcon.png">res/redesign/icons/NavBarIcons/Active/DashboardIcon.png</file>
         <file alias="Active/ProposalIcon.png">res/redesign/icons/NavBarIcons/Active/ProposalIcon.png</file>
         <file alias="Active/RequestFundsIcon.png">res/redesign/icons/NavBarIcons/Active/RequestFundsIcon.png</file>
+        <file alias="Active/BalancesIcon.png">res/redesign/icons/NavBarIcons/Active/BalancesIcon.png</file>
         <file alias="Active/SendFundsIcon.png">res/redesign/icons/NavBarIcons/Active/SendFundsIcon.png</file>
         <file alias="Active/ServiceNodesIcon.png">res/redesign/icons/NavBarIcons/Active/ServiceNodesIcon.png</file>
         <file alias="Active/SettingsIcon.png">res/redesign/icons/NavBarIcons/Active/SettingsIcon.png</file>
@@ -109,6 +110,7 @@
         <file alias="Inactive/DashboardIcon.png">res/redesign/icons/NavBarIcons/Inactive/DashboardIcon.png</file>
         <file alias="Inactive/ProposalIcon.png">res/redesign/icons/NavBarIcons/Inactive/ProposalIcon.png</file>
         <file alias="Inactive/RequestFundsIcon.png">res/redesign/icons/NavBarIcons/Inactive/RequestFundsIcon.png</file>
+        <file alias="Inactive/BalancesIcon.png">res/redesign/icons/NavBarIcons/Inactive/BalancesIcon.png</file>
         <file alias="Inactive/SendFundsIcon.png">res/redesign/icons/NavBarIcons/Inactive/SendFundsIcon.png</file>
         <file alias="Inactive/ServiceNodesIcon.png">res/redesign/icons/NavBarIcons/Inactive/ServiceNodesIcon.png</file>
         <file alias="Inactive/SettingsIcon.png">res/redesign/icons/NavBarIcons/Inactive/SettingsIcon.png</file>
