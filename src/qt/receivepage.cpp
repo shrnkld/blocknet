@@ -71,8 +71,8 @@ ReceivePage::ReceivePage(const PlatformStyle *_platformStyle, WalletModel *model
         }
     });
 
-    selectAddressBtn = new BlocknetIconBtn(QString(tr("Select from address book")), ":/redesign/QuickActions/AddressBookIcon.png");
-    newAddressBtn = new BlocknetIconBtn(QString(tr("Create new address")), ":/redesign/QuickActions/AddressButtonIcon.png");
+    selectAddressBtn = new BlocknetIconBtn(QString(tr("Select from\n address book")), ":/redesign/QuickActions/AddressBookIcon.png");
+    newAddressBtn = new BlocknetIconBtn(QString(tr("Create new\n address")), ":/redesign/QuickActions/AddressButtonIcon.png");
 
     connect(selectAddressBtn, &BlocknetIconBtn::clicked, this, &ReceivePage::openAddressBook);
     connect(newAddressBtn, &BlocknetIconBtn::clicked, this, &ReceivePage::onAddAddress);
